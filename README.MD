@@ -2,21 +2,21 @@
 
 **Automated security scanning for every pull request.**
 
-GuardLine is a free, open-source GitHub Action that catches security issues before they reach production. Drop it into any repo and get instant security feedback on every pull request — no configuration required.
+GuardLine is a free, open-source GitHub Action that scans for common security issues and posts a clear, actionable report directly on your pull request.
 
 ---
 
 ## What It Does
 
-GuardLine scans your codebase for common security issues and posts a clear, actionable report directly on your pull request. No dashboards to check, no external services to sign up for, no costs.
+GuardLine scans your codebase and reports findings by severity, with a specific remediation step for each one. It runs entirely inside GitHub Actions with no external services, no sign-up, and no cost. The one exception is dependency scanning, which queries the public [OSV.dev](https://osv.dev) API to check for known CVEs.
 
 ### Scan Categories
 
-- **Secrets Detection** — Finds hardcoded API keys, tokens, passwords, private keys, and credentials that should be in environment variables
-- **Dependency Vulnerabilities** — Checks your dependencies against [OSV.dev](https://osv.dev) (Google's Open Source Vulnerabilities database) for known CVEs
-- **Configuration Risks** — Identifies insecure defaults in common config files (Dockerfiles, nginx configs, CI/CD pipelines, cloud provider configs)
-- **Code Patterns** — Flags dangerous code patterns like SQL injection vectors and unsafe use of `eval()`
-- **Permission Issues** — Detects overly permissive file permissions on sensitive files (secrets, keys, configs)
+- **Secrets Detection:** Finds hardcoded API keys, tokens, passwords, private keys, and credentials that should be in environment variables
+- **Dependency Vulnerabilities:** Checks your dependencies against OSV.dev (Google's Open Source Vulnerabilities database) for known CVEs
+- **Configuration Risks:** Identifies insecure defaults in common config files (Dockerfiles, nginx configs, CI/CD pipelines, cloud provider configs)
+- **Code Patterns:** Flags dangerous code patterns like SQL injection vectors and unsafe use of `eval()`
+- **Permission Issues:** Detects overly permissive file permissions on sensitive files (secrets, keys, configs)
 
 ### Example Output
 
@@ -64,7 +64,7 @@ jobs:
           scan-level: standard  # Options: quick, standard, deep
 ```
 
-That's it. No API keys, no sign-up, no configuration files. Every pull request to your main branches now gets a security review.
+Every pull request to your main branches now gets a security scan with findings posted as a PR comment.
 
 ---
 
@@ -80,7 +80,7 @@ That's it. No API keys, no sign-up, no configuration files. Every pull request t
 
 ## Configuration (Optional)
 
-GuardLine works out of the box with zero config. For teams that want to customize, create a `.guardline.yml` in your repo root:
+GuardLine works out of the box with zero config. To customize, create a `.guardline.yml` in your repo root:
 
 ```yaml
 # .guardline.yml
@@ -118,12 +118,12 @@ custom-patterns:
 
 GuardLine scans any text-based file for secrets and configuration issues. Language-specific code pattern analysis currently supports:
 
-- **Python** — Django, Flask, FastAPI
-- **JavaScript / TypeScript** — Node.js, Express, React, Next.js
-- **Go** — Standard library, Gin, Echo
-- **Docker** — Dockerfile best practices
-- **Infrastructure** — Terraform, CloudFormation, nginx, Apache
-- **CI/CD** — GitHub Actions, GitLab CI, Jenkins
+- **Python:** Django, Flask, FastAPI
+- **JavaScript / TypeScript:** Node.js, Express, React, Next.js
+- **Go:** Standard library, Gin, Echo
+- **Docker:** Dockerfile best practices
+- **Infrastructure:** Terraform, CloudFormation, nginx, Apache
+- **CI/CD:** GitHub Actions, GitLab CI, Jenkins
 
 More languages and frameworks are added with each release.
 
@@ -136,25 +136,25 @@ Pull Request Opened
         │
         ▼
 ┌─────────────────┐
-│   File Scanner   │ ─── Identifies changed files, filters by .guardline.yml
+│   File Scanner   │  Identifies changed files, filters by .guardline.yml
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
-│  Secrets Engine  │ ─── Regex + entropy analysis for credentials
+│  Secrets Engine  │  Regex + entropy analysis for credentials
 ├─────────────────┤
-│   Dep Checker    │ ─── Cross-references lockfiles against OSV.dev
+│   Dep Checker    │  Cross-references lockfiles against OSV.dev
 ├─────────────────┤
-│  Config Auditor  │ ─── Rule-based checks on infrastructure configs
+│  Config Auditor  │  Rule-based checks on infrastructure configs
 ├─────────────────┤
-│ Pattern Analyzer │ ─── Regex-based scanning for dangerous code patterns
+│ Pattern Analyzer │  Regex-based scanning for dangerous code patterns
 ├─────────────────┤
-│ Permission Check │ ─── File permission review for sensitive files
+│ Permission Check │  File permission review for sensitive files
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
-│ Report Generator │ ─── Formats findings with severity + remediation
+│ Report Generator │  Formats findings with severity + remediation
 └────────┬────────┘
          │
          ▼
@@ -165,28 +165,25 @@ Pull Request Opened
 
 ## Why GuardLine?
 
-Most security tools are built for large enterprises. They require complex setup, paid subscriptions, and dedicated security teams to interpret results. GuardLine is built for everyone else.
+I built this to learn how security scanning actually works under the hood, and to share what I built along the way.
 
-- **Zero cost** — Free and open source, runs entirely on GitHub's free CI minutes
-- **Zero config** — Works immediately with sensible defaults
-- **Actionable output** — Every finding includes a specific remediation step, not just a warning
-- **Fast** — Standard scans complete in under 30 seconds
-- **Minimal external calls** — Secrets, config, pattern, and permission scanning all run locally inside GitHub Actions with no external API calls. The dependency scanner is the one exception: it queries the public OSV.dev API to check for known vulnerabilities.
-- **Built by a security practitioner** — Not a VC-funded startup chasing enterprise contracts
+Security is something I wanted to understand by doing, not just reading about. GuardLine started as a way to practice: how do you detect secrets in code? How do you check dependencies for known vulnerabilities? How do you turn that into something useful inside a CI/CD pipeline?
+
+If you're learning security or just want automatic scanning on your PRs without signing up for anything, feel free to use it, fork it, or open an issue if you find something it should be catching.
 
 ---
 
 ## Roadmap
 
-- [x] **v0.1** — Secrets detection (regex + entropy)
-- [x] **v0.2** — Dependency vulnerability scanning (OSV.dev integration)
-- [x] **v0.3** — Configuration file auditing
-- [x] **v0.4** — Dangerous code pattern detection
-- [x] **v0.4.5** — File permission scanning
-- [ ] **v0.5** — Custom rule definitions
-- [ ] **v1.0** — Stable release with full documentation
-- [ ] **v1.1** — AI-powered contextual analysis (deep scan mode)
-- [ ] **v1.2** — SARIF output for GitHub Security tab integration
+- [x] **v0.1** - Secrets detection (regex + entropy)
+- [x] **v0.2** - Dependency vulnerability scanning (OSV.dev integration)
+- [x] **v0.3** - Configuration file auditing
+- [x] **v0.4** - Dangerous code pattern detection
+- [x] **v0.4.5** - File permission scanning
+- [ ] **v0.5** - Custom rule definitions
+- [ ] **v1.0** - Stable release with full documentation
+- [ ] **v1.1** - AI-powered contextual analysis (deep scan mode)
+- [ ] **v1.2** - SARIF output for GitHub Security tab integration
 
 ---
 
@@ -194,7 +191,7 @@ Most security tools are built for large enterprises. They require complex setup,
 
 GuardLine is open source and contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-If you find a false positive or a security pattern we should be catching, open an issue. Real-world feedback makes this tool better for everyone.
+If you find a false positive or a security pattern we should be catching, open an issue.
 
 ---
 
