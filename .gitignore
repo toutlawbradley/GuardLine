@@ -1,0 +1,34 @@
+# ==========================================
+# Python Bytecode & Cache (Never commit these)
+# ==========================================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ==========================================
+# Environments & Dependencies
+# ==========================================
+# Excludes your local virtual environment folder
+venv/
+.venv/
+env/
+ENV/
+
+# ==========================================
+# IDEs and OS Clutter
+# ==========================================
+.DS_Store
+.vscode/
+.idea/
+
+# ==========================================
+# Security Guardrails (Double Check!)
+# ==========================================
+# Never risk committing raw environment secrets
+.env
+*.pem
+*.key
