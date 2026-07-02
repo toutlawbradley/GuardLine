@@ -13,10 +13,10 @@ GuardLine scans your codebase for common security issues and posts a clear, acti
 ### Scan Categories
 
 - **Secrets Detection** — Finds hardcoded API keys, tokens, passwords, private keys, and credentials that should be in environment variables
-- **Dependency Vulnerabilities** — Checks your dependencies against the National Vulnerability Database (NVD) for known CVEs
+- **Dependency Vulnerabilities** — Checks your dependencies against [OSV.dev](https://osv.dev) (Google's Open Source Vulnerabilities database) for known CVEs
 - **Configuration Risks** — Identifies insecure defaults in common config files (Dockerfiles, nginx configs, CI/CD pipelines, cloud provider configs)
-- **Code Patterns** — Flags dangerous code patterns like SQL injection vectors, insecure deserialization, weak cryptographic usage, and missing input validation
-- **Permission Issues** — Detects overly permissive file permissions, exposed debug endpoints, and misconfigured access controls
+- **Code Patterns** — Flags dangerous code patterns like SQL injection vectors and unsafe use of `eval()`
+- **Permission Issues** — Detects overly permissive file permissions on sensitive files (secrets, keys, configs)
 
 ### Example Output
 
@@ -30,8 +30,8 @@ GuardLine scans your codebase for common security issues and posts a clear, acti
     Remediation: Add USER directive with non-root user
   → Dependency 'lodash@4.17.20' has known CVE-2021-23337 (HIGH)
     Remediation: Upgrade to lodash@4.17.21 or later
-  → Debug endpoint exposed in routes/api.js:12
-    Remediation: Remove or gate behind authentication
+  → requirements.txt has permissions 777, allowing unauthorized read/write access
+    Remediation: Restrict permissions, e.g. chmod 600 for sensitive files
 
 🟢 PASSED (12 checks)
   → No hardcoded credentials in environment files
@@ -143,13 +143,13 @@ Pull Request Opened
 ┌─────────────────┐
 │  Secrets Engine  │ ─── Regex + entropy analysis for credentials
 ├─────────────────┤
-│   Dep Checker    │ ─── Cross-references lockfiles against NVD/OSV
+│   Dep Checker    │ ─── Cross-references lockfiles against OSV.dev
 ├─────────────────┤
 │  Config Auditor  │ ─── Rule-based checks on infrastructure configs
 ├─────────────────┤
-│ Pattern Analyzer │ ─── AST-aware scanning for dangerous code patterns
+│ Pattern Analyzer │ ─── Regex-based scanning for dangerous code patterns
 ├─────────────────┤
-│ Permission Check │ ─── File permissions + access control review
+│ Permission Check │ ─── File permission review for sensitive files
 └────────┬────────┘
          │
          ▼
@@ -171,7 +171,7 @@ Most security tools are built for large enterprises. They require complex setup,
 - **Zero config** — Works immediately with sensible defaults
 - **Actionable output** — Every finding includes a specific remediation step, not just a warning
 - **Fast** — Standard scans complete in under 30 seconds
-- **No data leaves your repo** — Everything runs inside GitHub Actions, no external API calls for core scanning
+- **Minimal external calls** — Secrets, config, pattern, and permission scanning all run locally inside GitHub Actions with no external API calls. The dependency scanner is the one exception: it queries the public OSV.dev API to check for known vulnerabilities.
 - **Built by a security practitioner** — Not a VC-funded startup chasing enterprise contracts
 
 ---
@@ -179,9 +179,10 @@ Most security tools are built for large enterprises. They require complex setup,
 ## Roadmap
 
 - [x] **v0.1** — Secrets detection (regex + entropy)
-- [ ] **v0.2** — Dependency vulnerability scanning (NVD/OSV integration)
-- [ ] **v0.3** — Configuration file auditing
-- [ ] **v0.4** — Language-specific code pattern analysis
+- [x] **v0.2** — Dependency vulnerability scanning (OSV.dev integration)
+- [x] **v0.3** — Configuration file auditing
+- [x] **v0.4** — Dangerous code pattern detection
+- [x] **v0.4.5** — File permission scanning
 - [ ] **v0.5** — Custom rule definitions
 - [ ] **v1.0** — Stable release with full documentation
 - [ ] **v1.1** — AI-powered contextual analysis (deep scan mode)
@@ -203,4 +204,4 @@ MIT License. Use it, fork it, build on it.
 
 ---
 
-**Built by [Tyler Outlaw-Bradley](https://github.com/outlawmetrics)**# GuardLine
+**Built by [Tyler Outlaw-Bradley](https://github.com/toutlawbradley)**
