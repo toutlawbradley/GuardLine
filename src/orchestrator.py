@@ -3,11 +3,12 @@ from src.scanners.config.scanner import ConfigScanner
 from src.scanners.dependencies.scanner import DependenciesScanner
 from src.scanners.patterns.scanner import PatternScanner
 from src.scanners.secrets.scanner import SecretsScanner
+from src.scanners.permissions.scanner import PermissionsScanner
 from src.models import Finding, Report, ReportSummary
 
 class Orchestrator:
     def __init__(self):
-        self.scanners = [SecretsScanner(),DependenciesScanner(),ConfigScanner(), PatternScanner()]
+        self.scanners = [SecretsScanner(),DependenciesScanner(),ConfigScanner(), PatternScanner(), PermissionsScanner()]
 
     def run(self, changed_files: list[str], config: dict) -> Report:
         start_time = time.time()
