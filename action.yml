@@ -20,7 +20,7 @@ runs:
       shell: bash
       run: |
         pip install pyyaml requests
-        git clone https://github.com/outlawmetrics/GuardLine.git /tmp/guardline
+        git clone https://github.com/toutlawbradley/GuardLine.git /tmp/guardline
 
     - name: Run GuardLine
       shell: bash

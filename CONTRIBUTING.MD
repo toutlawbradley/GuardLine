@@ -10,7 +10,7 @@ The easiest way to contribute is by adding new detection patterns. Each pattern 
 
 ```bash
 # Clone the repo
-git clone https://github.com/outlawmetrics/guardline.git
+git clone https://github.com/toutlawbradley/guardline.git
 cd guardline
 
 # Create a virtual environment
