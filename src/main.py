@@ -1,9 +1,11 @@
 import os
 import subprocess
+import sys
 from src.orchestrator import Orchestrator
 from src.reporter import Reporter
 from src.config import load_config
 from src.github_api import post_pr_comment
+
 
 def get_changed_files():
     scan_target = os.environ.get("SCAN_TARGET", ".")
@@ -51,6 +53,11 @@ def main():
     output = reporter.generate(report)
 
     post_pr_comment(output)
+
+    if report.summary.critical>0:
+        print("Critical vulnerabilities found.")
+        sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
