@@ -1,5 +1,11 @@
 from src.models import Report, Finding
 
+SEVERITY_TO_SARIF_LEVEL = {
+    "critical": "error",
+    "warning": "warning",
+    "info": "note"
+}
+
 class Reporter:
     def generate(self, report: Report) -> str:
         critical_findings = []
@@ -42,3 +48,36 @@ class Reporter:
         output = output + "📊 Summary: " + str(report.summary.critical) + " critical, " + str(report.summary.warning) + " warnings, " + str(report.summary.info) + " info | Scanned " + str(report.files_scanned) + " files in " + str(round(report.scan_duration, 2)) + "s\n"
 
         return output
+
+    def _finding_to_sarif_result(self, finding):
+        level = SEVERITY_TO_SARIF_LEVEL.get(finding.severity, "note")
+        line_number = finding.line if finding.line is not None else 1
+
+        return {
+            "ruleId": finding.pattern_id,
+            "level": level,
+            "message": {"text": finding.title},
+            "locations": [
+                {
+                    "physicalLocation": {
+                        "artifactLocation": {"uri": finding.file},
+                        "region": {"startLine": line_number}
+                    }
+                }
+            ]
+        }
+
+    def generate_sarif(self, report: Report) -> dict:
+        results = []
+        for finding in report.findings:
+            results.append(self._finding_to_sarif_result(finding))
+
+        return {
+            "version": "2.1.0",
+            "runs": [
+                {
+                    "tool": {"driver": {"name": "GuardLine", "rules": []}},
+                    "results": results
+                }
+            ]
+        }
