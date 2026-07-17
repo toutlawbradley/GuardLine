@@ -1,22 +1,22 @@
 # GuardLine
 
-**Automated security scanning for every pull request.**
+**Automated security scanning for pull requests.**
 
-GuardLine is a free, open-source GitHub Action that scans for common security issues and posts a clear, actionable report directly on your pull request.
+GuardLine is an open-source GitHub Action I built to learn how security scanning tools work under the hood — secrets detection, dependency vulnerability checks, config auditing, and more, wired into a real CI/CD pipeline. It scans a pull request and posts a report of what it finds, with an option to block the merge if something critical turns up.
 
 ---
 
 ## What It Does
 
-GuardLine scans your codebase and reports findings by severity, with a specific remediation step for each one. It runs entirely inside GitHub Actions with no external services, no sign-up, and no cost. The one exception is dependency scanning, which queries the public [OSV.dev](https://osv.dev) API to check for known CVEs.
+GuardLine scans a codebase for common security issues and posts a report on the pull request. Findings are also published in SARIF format to GitHub's Security tab, and critical findings can automatically block a PR from merging.
 
 ### Scan Categories
 
-- **Secrets Detection:** Finds hardcoded API keys, tokens, passwords, private keys, and credentials that should be in environment variables
-- **Dependency Vulnerabilities:** Checks your dependencies against OSV.dev (Google's Open Source Vulnerabilities database) for known CVEs
-- **Configuration Risks:** Identifies insecure defaults in common config files (Dockerfiles, nginx configs, CI/CD pipelines, cloud provider configs)
-- **Code Patterns:** Flags dangerous code patterns like SQL injection vectors and unsafe use of `eval()`
-- **Permission Issues:** Detects overly permissive file permissions on sensitive files (secrets, keys, configs)
+- **Secrets Detection** — Finds hardcoded API keys, tokens, passwords, private keys, and credentials that should be in environment variables
+- **Dependency Vulnerabilities** — Checks your dependencies against [OSV.dev](https://osv.dev) (Google's Open Source Vulnerabilities database) for known CVEs
+- **Configuration Risks** — Identifies insecure defaults in common config files (Dockerfiles, nginx configs, CI/CD pipelines, cloud provider configs)
+- **Code Patterns** — Flags dangerous code patterns like SQL injection vectors and unsafe use of `eval()`
+- **Permission Issues** — Detects overly permissive file permissions on sensitive files (secrets, keys, configs)
 
 ### Example Output
 
@@ -40,7 +40,11 @@ GuardLine scans your codebase and reports findings by severity, with a specific 
   ...
 
 📊 Summary: 1 critical, 3 warnings, 12 passed | Scanned 847 files in 14s
+
+❌ Build failed: 1 critical finding must be resolved before merging.
 ```
+
+Findings are also uploaded as a SARIF file, so they show up natively in GitHub's **Security** tab alongside tools like CodeQL — not just as a PR comment.
 
 ---
 
@@ -54,6 +58,9 @@ on:
   pull_request:
     branches: [main, develop]
 
+permissions:
+  security-events: write  # required so GuardLine can publish results to the Security tab
+
 jobs:
   security-scan:
     runs-on: ubuntu-latest
@@ -64,7 +71,9 @@ jobs:
           scan-level: standard  # Options: quick, standard, deep
 ```
 
-Every pull request to your main branches now gets a security scan with findings posted as a PR comment.
+Every pull request to your main branches gets a security review, and a critical finding will fail the check, blocking the merge until it's resolved.
+
+> **Note:** the `security-events: write` permission is required for SARIF results to appear in your repo's Security tab. Without it, GuardLine will still comment on the PR and enforce the policy gate, but results won't show up in the Security tab.
 
 ---
 
@@ -78,9 +87,17 @@ Every pull request to your main branches now gets a security scan with findings 
 
 ---
 
+## Policy Gates
+
+GuardLine doesn't just report findings — it can block a merge. Currently, **any critical finding fails the build** (the GitHub Action exits with a non-zero status). If you mark this check as required in your repo's branch protection settings, PRs with unresolved critical findings can't be merged.
+
+Configurable thresholds (e.g. failing on `warning` instead of `critical`, or capping the number of allowed warnings) are on the roadmap but not yet implemented — the gate is currently a fixed rule, not driven by `.guardline.yml`.
+
+---
+
 ## Configuration (Optional)
 
-GuardLine works out of the box with zero config. To customize, create a `.guardline.yml` in your repo root:
+No config file is required — GuardLine runs with sensible defaults out of the box. To customize behavior, create a `.guardline.yml` in your repo root:
 
 ```yaml
 # .guardline.yml
@@ -112,18 +129,20 @@ custom-patterns:
     severity: critical
 ```
 
+> **Note:** the `thresholds` section above is part of the planned configuration surface. The policy gate currently always fails on critical findings regardless of these values — see [Policy Gates](#policy-gates).
+
 ---
 
 ## Supported Languages & Frameworks
 
 GuardLine scans any text-based file for secrets and configuration issues. Language-specific code pattern analysis currently supports:
 
-- **Python:** Django, Flask, FastAPI
-- **JavaScript / TypeScript:** Node.js, Express, React, Next.js
-- **Go:** Standard library, Gin, Echo
-- **Docker:** Dockerfile best practices
-- **Infrastructure:** Terraform, CloudFormation, nginx, Apache
-- **CI/CD:** GitHub Actions, GitLab CI, Jenkins
+- **Python** — Django, Flask, FastAPI
+- **JavaScript / TypeScript** — Node.js, Express, React, Next.js
+- **Go** — Standard library, Gin, Echo
+- **Docker** — Dockerfile best practices
+- **Infrastructure** — Terraform, CloudFormation, nginx, Apache
+- **CI/CD** — GitHub Actions, GitLab CI, Jenkins
 
 More languages and frameworks are added with each release.
 
@@ -136,54 +155,69 @@ Pull Request Opened
         │
         ▼
 ┌─────────────────┐
-│   File Scanner   │  Identifies changed files, filters by .guardline.yml
+│   File Scanner   │ ─── Identifies changed files, filters by .guardline.yml
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
-│  Secrets Engine  │  Regex + entropy analysis for credentials
+│  Secrets Engine  │ ─── Regex + entropy analysis for credentials
 ├─────────────────┤
-│   Dep Checker    │  Cross-references lockfiles against OSV.dev
+│   Dep Checker    │ ─── Cross-references lockfiles against OSV.dev
 ├─────────────────┤
-│  Config Auditor  │  Rule-based checks on infrastructure configs
+│  Config Auditor  │ ─── Rule-based checks on infrastructure configs
 ├─────────────────┤
-│ Pattern Analyzer │  Regex-based scanning for dangerous code patterns
+│ Pattern Analyzer │ ─── Regex-based scanning for dangerous code patterns
 ├─────────────────┤
-│ Permission Check │  File permission review for sensitive files
+│ Permission Check │ ─── File permission review for sensitive files
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
-│ Report Generator │  Formats findings with severity + remediation
+│ Report Generator │ ─── Formats findings as a PR comment AND as SARIF
 └────────┬────────┘
          │
-         ▼
-  PR Comment Posted
+    ┌────┴─────┐
+    ▼          ▼
+PR Comment   SARIF Upload → GitHub Security tab
+    │
+    ▼
+Critical finding? ─── Yes ──▶ Build fails (policy gate)
+    │
+    No
+    ▼
+Build passes
 ```
 
 ---
 
-## Why GuardLine?
+## About This Project
 
-I built this to learn how security scanning actually works under the hood, and to share what I built along the way.
+GuardLine is a personal project built to understand how real security scanning tools work. Enterprise security tools do this at a much larger scale with far more sophisticated detection; this is a learning exercise in building something similar from scratch.
 
-Security is something I wanted to understand by doing, not just reading about. GuardLine started as a way to practice: how do you detect secrets in code? How do you check dependencies for known vulnerabilities? How do you turn that into something useful inside a CI/CD pipeline?
+A few things it does aim to get right:
 
-If you're learning security or just want automatic scanning on your PRs without signing up for anything, feel free to use it, fork it, or open an issue if you find something it should be catching.
+- **Actionable output** — findings include a specific remediation step, not just a warning
+- **Enforceable** — critical findings can block a merge via a policy gate, not just get commented on
+- **Native GitHub integration** — results appear in the Security tab via SARIF, the same format tools like CodeQL use
+- **Mostly local** — secrets, config, pattern, and permission scanning all run inside GitHub Actions with no external calls. The dependency scanner is the exception: it queries the public OSV.dev API to check for known CVEs.
+
+Current limitations are documented honestly in the [Roadmap](#roadmap) below rather than glossed over.
 
 ---
 
 ## Roadmap
 
-- [x] **v0.1** - Secrets detection (regex + entropy)
-- [x] **v0.2** - Dependency vulnerability scanning (OSV.dev integration)
-- [x] **v0.3** - Configuration file auditing
-- [x] **v0.4** - Dangerous code pattern detection
-- [x] **v0.4.5** - File permission scanning
-- [ ] **v0.5** - Custom rule definitions
-- [ ] **v1.0** - Stable release with full documentation
-- [ ] **v1.1** - AI-powered contextual analysis (deep scan mode)
-- [ ] **v1.2** - SARIF output for GitHub Security tab integration
+- [x] **v0.1** — Secrets detection (regex + entropy)
+- [x] **v0.2** — Dependency vulnerability scanning (OSV.dev integration)
+- [x] **v0.3** — Configuration file auditing
+- [x] **v0.4** — Dangerous code pattern detection
+- [x] **v0.4.5** — File permission scanning
+- [x] **v0.6** — Policy gates (fail build on critical findings)
+- [x] **v0.7** — SARIF output for GitHub Security tab integration
+- [ ] **v0.5** — Custom rule definitions
+- [ ] **v0.8** — Configurable policy gate thresholds (respect `.guardline.yml`'s `thresholds` section)
+- [ ] **v1.0** — Stable release with full documentation
+- [ ] **v1.1** — AI-powered contextual analysis (deep scan mode)
 
 ---
 
@@ -191,7 +225,7 @@ If you're learning security or just want automatic scanning on your PRs without 
 
 GuardLine is open source and contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-If you find a false positive or a security pattern we should be catching, open an issue.
+If you find a false positive or a security pattern that isn't being caught, open an issue.
 
 ---
 
