@@ -31,4 +31,4 @@ ENV/
 # Never risk committing raw environment secrets
 .env
 *.pem
-*.key
+*.keyresults.sarif

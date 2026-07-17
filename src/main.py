@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+import json
 from src.orchestrator import Orchestrator
 from src.reporter import Reporter
 from src.config import load_config
@@ -54,6 +55,10 @@ def main():
 
     post_pr_comment(output)
 
+    sarif_data = reporter.generate_sarif(report)
+    with open("results.sarif", "w") as f:
+        f.write(json.dumps(sarif_data))
+
     if report.summary.critical>0:
         print("Critical vulnerabilities found.")
         sys.exit(1)
@@ -61,3 +66,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
