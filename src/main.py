@@ -59,9 +59,28 @@ def main():
     with open("results.sarif", "w") as f:
         f.write(json.dumps(sarif_data))
 
-    if report.summary.critical>0:
-        print("Critical vulnerabilities found.")
-        sys.exit(1)
+    SEVERITY_RANK = {
+        "critical": 3,
+        "warning": 2,
+        "info": 1
+    }
+
+    thresholds = config.get("thresholds",{})
+    fail_on = thresholds.get("fail_on", "critical")
+    threshold_rank = SEVERITY_RANK.get(fail_on)
+
+    should_fail = False
+    if report.summary.critical > 0 and SEVERITY_RANK["critical"] >= threshold_rank:
+        should_fail = True
+    if report.summary.warning > 0 and SEVERITY_RANK["warning"] >= threshold_rank:
+        should_fail = True
+    if report.summary.info > 0 and SEVERITY_RANK["info"] >= threshold_rank:
+        should_fail = True
+
+    if should_fail:
+         print(f"Findings at or above '{fail_on}' threshold found. Failing build.")
+         sys.exit(1)
+    
 
 
 if __name__ == "__main__":
