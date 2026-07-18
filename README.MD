@@ -89,9 +89,9 @@ Every pull request to your main branches gets a security review, and a critical 
 
 ## Policy Gates
 
-GuardLine doesn't just report findings — it can block a merge. Currently, **any critical finding fails the build** (the GitHub Action exits with a non-zero status). If you mark this check as required in your repo's branch protection settings, PRs with unresolved critical findings can't be merged.
+GuardLine doesn't just report findings — it can block a merge. By default, **any critical finding fails the build** (the GitHub Action exits with a non-zero status). If you mark this check as required in your repo's branch protection settings, PRs with unresolved findings at or above the threshold can't be merged.
 
-Configurable thresholds (e.g. failing on `warning` instead of `critical`, or capping the number of allowed warnings) are on the roadmap but not yet implemented — the gate is currently a fixed rule, not driven by `.guardline.yml`.
+The threshold is configurable via `.guardline.yml`'s `thresholds.fail-on` setting (`critical`, `warning`, or `info`). Setting a looser threshold like `fail-on: info` also fails on anything worse than info (warning or critical) — it's a minimum severity to tolerate, not an exact match. `max-warnings` (capping the number of allowed warnings regardless of severity) is not yet implemented.
 
 ---
 
@@ -129,7 +129,7 @@ custom-patterns:
     severity: critical
 ```
 
-> **Note:** the `thresholds` section above is part of the planned configuration surface. The policy gate currently always fails on critical findings regardless of these values — see [Policy Gates](#policy-gates).
+> **Note:** `thresholds.fail-on` is respected by the policy gate — see [Policy Gates](#policy-gates). `thresholds.max-warnings` is not yet implemented; setting it currently has no effect. `custom-patterns` is only supported by the secrets scanner today, and isn't yet covered by an automated test.
 
 ---
 
@@ -214,7 +214,7 @@ Current limitations are documented honestly in the [Roadmap](#roadmap) below rat
 - [x] **v0.4.5** — File permission scanning
 - [x] **v0.6** — Policy gates (fail build on critical findings)
 - [x] **v0.7** — SARIF output for GitHub Security tab integration
-- [ ] **v0.5** — Custom rule definitions
+- [ ] **v0.5** — Custom rule definitions (secrets scanner supports `custom-patterns` today, but it's untested and not yet extended to the other four scanners)
 - [ ] **v0.8** — Configurable policy gate thresholds (respect `.guardline.yml`'s `thresholds` section)
 - [ ] **v1.0** — Stable release with full documentation
 - [ ] **v1.1** — AI-powered contextual analysis (deep scan mode)
