@@ -91,7 +91,6 @@ Every pull request to your main branches gets a security review, and a critical 
 
 GuardLine doesn't just report findings — it can block a merge. Currently, **any critical finding fails the build** (the GitHub Action exits with a non-zero status). If you mark this check as required in your repo's branch protection settings, PRs with unresolved critical findings can't be merged.
 
-Configurable thresholds (e.g. failing on `warning` instead of `critical`, or capping the number of allowed warnings) are on the roadmap but not yet implemented — the gate is currently a fixed rule, not driven by `.guardline.yml`.
 
 ---
 
@@ -129,7 +128,6 @@ custom-patterns:
     severity: critical
 ```
 
-> **Note:** the `thresholds` section above is part of the planned configuration surface. The policy gate currently always fails on critical findings regardless of these values — see [Policy Gates](#policy-gates).
 
 ---
 
@@ -215,7 +213,7 @@ Current limitations are documented honestly in the [Roadmap](#roadmap) below rat
 - [x] **v0.6** — Policy gates (fail build on critical findings)
 - [x] **v0.7** — SARIF output for GitHub Security tab integration
 - [ ] **v0.5** — Custom rule definitions
-- [ ] **v0.8** — Configurable policy gate thresholds (respect `.guardline.yml`'s `thresholds` section)
+- [x] **v0.8** — Configurable policy gate thresholds (respect `.guardline.yml`'s `thresholds` section)
 - [ ] **v1.0** — Stable release with full documentation
 - [ ] **v1.1** — AI-powered contextual analysis (deep scan mode)
 
