@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: toutlawbradley/GuardLine@v1
+      - uses: toutlawbradley/GuardLine@v1.1.0
         with:
           scan-level: standard  # Options: quick, standard, deep
 ```
@@ -219,7 +219,7 @@ Current limitations are documented honestly in the [Roadmap](#roadmap) below rat
 - [ ] **v0.5** — Custom rule definitions (secrets scanner supports `custom-patterns` today, but it's untested and not yet extended to the other four scanners)
 - [x] **v0.8** — Configurable policy gate thresholds (respect `.guardline.yml`'s `thresholds` section)
 - [ ] **v1.0** — Stable release with full documentation
-- [ ] **v1.1** — AI-powered contextual analysis (deep scan mode)
+- [ ] **v2.0** — AI-powered contextual analysis (deep scan mode)
 
 ---
 
