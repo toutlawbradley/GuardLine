@@ -60,6 +60,8 @@ on:
 
 permissions:
   security-events: write  # required so GuardLine can publish results to the Security tab
+  issues: write            # required so GuardLine can post the PR comment
+  pull-requests: write     # required so GuardLine can post the PR comment
 
 jobs:
   security-scan:
@@ -73,7 +75,7 @@ jobs:
 
 Every pull request to your main branches gets a security review, and a critical finding will fail the check, blocking the merge until it's resolved.
 
-> **Note:** the `security-events: write` permission is required for SARIF results to appear in your repo's Security tab. Without it, GuardLine will still comment on the PR and enforce the policy gate, but results won't show up in the Security tab.
+> **Note:** GitHub Actions resets *all* unspecified permissions to `none` the moment you declare any single permission in your workflow — so all three permissions above are required together, not individually optional. `security-events: write` is needed for SARIF results to appear in the Security tab; `issues: write` and `pull-requests: write` are needed for GuardLine to post its PR comment at all. Missing the latter two will cause the comment step to fail with a 403 error, even though scanning and the policy gate still work correctly.
 
 ---
 
@@ -215,17 +217,11 @@ Current limitations are documented honestly in the [Roadmap](#roadmap) below rat
 - [x] **v0.6** — Policy gates (fail build on critical findings)
 - [x] **v0.7** — SARIF output for GitHub Security tab integration
 - [ ] **v0.5** — Custom rule definitions (secrets scanner supports `custom-patterns` today, but it's untested and not yet extended to the other four scanners)
-- [ ] **v0.8** — Configurable policy gate thresholds (respect `.guardline.yml`'s `thresholds` section)
+- [x] **v0.8** — Configurable policy gate thresholds (respect `.guardline.yml`'s `thresholds` section)
 - [ ] **v1.0** — Stable release with full documentation
 - [ ] **v1.1** — AI-powered contextual analysis (deep scan mode)
 
 ---
-
-## Contributing
-
-GuardLine is open source and contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-If you find a false positive or a security pattern that isn't being caught, open an issue.
 
 ---
 
