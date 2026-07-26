@@ -12,7 +12,7 @@ runs:
   using: "composite"
   steps:
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: "3.13"
 
@@ -20,13 +20,12 @@ runs:
       shell: bash
       run: |
         pip install pyyaml requests
-        git clone https://github.com/toutlawbradley/GuardLine.git /tmp/guardline
 
     - name: Run GuardLine
       shell: bash
       run: |
         export SCAN_TARGET="${GITHUB_WORKSPACE}"
-        cd /tmp/guardline
+        cd ${{github.action_path}}
         python -m src.main
       env:
         GITHUB_TOKEN: ${{ github.token }}
@@ -37,7 +36,7 @@ runs:
     - name: Upload SARIF file
       uses: github/codeql-action/upload-sarif@v3
       with: 
-        sarif_file: /tmp/guardline/results.sarif
+        sarif_file: ${{github.action_path}}/results.sarif
         token: ${{ github.token }}
 
 branding:
