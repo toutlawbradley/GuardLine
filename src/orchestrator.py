@@ -45,7 +45,6 @@ class Orchestrator:
                 passed=passed
             ),
             scan_duration=scan_duration,
-            scan_level=config.get("scan_level", "standard"),
             files_scanned=len(changed_files),
             guardline_version="0.1.0"
         )

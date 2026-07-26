@@ -25,7 +25,6 @@ class Report:
     findings: list[Finding]  # List of findings from the scan
     summary: ReportSummary   # Summary of the scan
     scan_duration: float     # Duration of the scan
-    scan_level: str          # Level of the scan
     files_scanned: int       # Number of files scanned
     guardline_version: str   # Version of GuardLine
 
