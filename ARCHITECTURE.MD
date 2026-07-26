@@ -16,13 +16,10 @@ A developer should go from "never heard of this" to "running on my repo" in unde
 **2. Actionable over comprehensive.**
 Every finding must include a specific remediation step. A warning without a fix is noise. GuardLine prioritizes telling you what to do over telling you everything that's wrong.
 
-**3. Layered depth.**
-The scanning engine is modular. Each scanner operates independently and can be enabled/disabled. This allows scan levels (quick/standard/deep) to simply toggle which scanners run, rather than requiring different codepaths.
+**3. No data exfiltration.**
+Core scanning runs entirely within the GitHub Actions runner. No code or findings are sent to external services.
 
-**4. No data exfiltration.**
-Core scanning runs entirely within the GitHub Actions runner. No code or findings are sent to external services. The optional AI-powered deep scan (v1.1+) will use API calls but will be explicitly opt-in and clearly documented.
-
-**5. Fail-safe defaults.**
+**4. Fail-safe defaults.**
 If a scanner errors out, it reports the error but does not block the PR. Security tooling that blocks deploys due to its own bugs gets ripped out fast. GuardLine should never be the reason a team removes security scanning.
 
 ---
@@ -37,7 +34,6 @@ If a scanner errors out, it reports the error but does not block the PR. Securit
 │  │  Entry Point │───▶│         Core Orchestrator        │ │
 │  │  (action.yml)│    │                                  │ │
 │  └─────────────┘    │  - Reads config (.guardline.yml) │ │
-│                      │  - Resolves scan level           │ │
 │                      │  - Dispatches to scanners        │ │
 │                      │  - Aggregates results            │ │
 │                      │  - Generates report              │ │
@@ -212,10 +208,9 @@ def run_guardline(config):
     # 1. Determine which files changed in the PR
     changed_files = get_pr_diff()
 
-    # 2. Resolve scan level and enabled scanners
-    scanners = resolve_scanners(config.scan_level, config.scanners)
-
-    # 3. Run each scanner independently
+    # 2. Run each enabled scanner independently
+    # NOTE: per-scanner enable/disable via config is not yet implemented —
+    # all five scanners currently run on every scan.
     all_findings = []
     for scanner in scanners:
         try:
@@ -228,13 +223,13 @@ def run_guardline(config):
                 remediation="This is a GuardLine issue, not a code issue."
             ))
 
-    # 4. Aggregate, deduplicate, and sort by severity
+    # 3. Aggregate, deduplicate, and sort by severity
     report = aggregate_findings(all_findings)
 
-    # 5. Post as PR comment
+    # 4. Post as PR comment
     post_pr_comment(report)
 
-    # 6. Set exit code based on thresholds
+    # 5. Set exit code based on thresholds
     return evaluate_thresholds(report, config.thresholds)
 ```
 
@@ -269,7 +264,6 @@ class Report:
     findings: list[Finding]
     summary: ReportSummary
     scan_duration: float
-    scan_level: str
     files_scanned: int
     guardline_version: str
 
@@ -400,11 +394,6 @@ guardline/
 - Full documentation
 - Performance optimization
 - Community feedback incorporated
-
-### v1.1 — AI-Powered Deep Scan (Target: December 2026)
-- Optional AI analysis for contextual understanding
-- Requires opt-in API key configuration
-- Explains findings in plain English with full context
 
 ---
 

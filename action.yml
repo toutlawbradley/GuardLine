@@ -2,11 +2,6 @@ name: "GuardLine Security Scan"
 description: "Automated security scanning for pull requests"
 author: "Tyler Outlaw-Bradley"
 
-inputs:
-  scan-level:
-    description: "Scan depth: quick, standard, or deep"
-    required: false
-    default: "standard"
 
 runs:
   using: "composite"

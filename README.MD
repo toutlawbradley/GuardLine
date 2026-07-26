@@ -69,23 +69,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: toutlawbradley/GuardLine@v1.1.0
-        with:
-          scan-level: standard  # Options: quick, standard, deep
 ```
 
 Every pull request to your main branches gets a security review, and a critical finding will fail the check, blocking the merge until it's resolved.
 
 > **Note:** GitHub Actions resets *all* unspecified permissions to `none` the moment you declare any single permission in your workflow — so all three permissions above are required together, not individually optional. `security-events: write` is needed for SARIF results to appear in the Security tab; `issues: write` and `pull-requests: write` are needed for GuardLine to post its PR comment at all. Missing the latter two will cause the comment step to fail with a 403 error, even though scanning and the policy gate still work correctly.
-
----
-
-## Scan Levels
-
-| Level | What It Covers | Speed | Best For |
-|-------|---------------|-------|----------|
-| `quick` | Secrets + critical config issues | ~5s | Fast feedback on every commit |
-| `standard` | All scan categories | ~15-30s | Default for most repos |
-| `deep` | Standard + AI-powered contextual analysis | ~60s | Pre-release or sensitive repos |
 
 ---
 
@@ -102,8 +90,6 @@ The threshold is configurable via `.guardline.yml`'s `thresholds.fail-on` settin
 No config file is required — GuardLine runs with sensible defaults out of the box. To customize behavior, create a `.guardline.yml` in your repo root:
 
 ```yaml
-# .guardline.yml
-scan-level: standard
 
 # Ignore specific paths
 ignore:
@@ -219,7 +205,6 @@ Current limitations are documented honestly in the [Roadmap](#roadmap) below rat
 - [ ] **v0.5** — Custom rule definitions (secrets scanner supports `custom-patterns` today, but it's untested and not yet extended to the other four scanners)
 - [x] **v0.8** — Configurable policy gate thresholds (respect `.guardline.yml`'s `thresholds` section)
 - [ ] **v1.0** — Stable release with full documentation
-- [ ] **v2.0** — AI-powered contextual analysis (deep scan mode)
 
 ---
 
