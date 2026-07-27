@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+
 @dataclass
 class Finding:
     scanner: str          # Which scanner produced this ("secrets", "dependencies", etc.)
@@ -28,3 +29,7 @@ class Report:
     files_scanned: int       # Number of files scanned
     guardline_version: str   # Version of GuardLine
 
+@dataclass
+class ScanResult:
+    findings: list[Finding]
+    checks_run: int
