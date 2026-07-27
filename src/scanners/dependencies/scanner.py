@@ -1,6 +1,6 @@
 import requests
 from src.scanners.base import BaseScanner
-from src.models import Finding
+from src.models import Finding, ScanResult
 
 class DependenciesScanner(BaseScanner):
 
@@ -16,8 +16,10 @@ class DependenciesScanner(BaseScanner):
     def supported_file_extensions(self) -> list[str]:
         return ["requirements.txt", "Pipfile.lock", "package-lock.json", "yarn.lock", "Cargo.lock"]
         
-    def scan(self, changed_files: list[str], config: dict) -> list[Finding]:
+    def scan(self, changed_files: list[str], config: dict) -> ScanResult:
         findings = []
+
+        checks_run = 0
 
         for file_path in changed_files:
             if not any(file_path.endswith(ext) for ext in self.supported_file_extensions):
@@ -36,6 +38,8 @@ class DependenciesScanner(BaseScanner):
                 parts = line.strip().split("==")
                 name = parts[0]
                 version = parts[1]
+
+                checks_run = checks_run + 1
 
                 response = requests.post("https://api.osv.dev/v1/query", json={
                     "package": {"name": name, "ecosystem": "PyPI"},
@@ -58,4 +62,4 @@ class DependenciesScanner(BaseScanner):
                             metadata={"package": name, "version": version}
                         ))
 
-        return findings
+        return ScanResult(findings=findings, checks_run=checks_run)

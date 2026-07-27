@@ -3,7 +3,7 @@ import re
 import yaml
 from src.scanners.base import BaseScanner
 from src.scanners.secrets.entropy import calculate_entropy
-from src.models import Finding
+from src.models import Finding, ScanResult
 
 class SecretsScanner(BaseScanner):    
 
@@ -27,7 +27,7 @@ class SecretsScanner(BaseScanner):
             data = yaml.safe_load(f)
         return data["patterns"]
 
-    def scan(self, changed_files: list[str], config: dict) -> list[Finding]:
+    def scan(self, changed_files: list[str], config: dict) -> ScanResult:
         findings = []
 
         all_patterns = list(self.patterns)
@@ -43,6 +43,8 @@ class SecretsScanner(BaseScanner):
                     "description": "Custom rule: " + custom["name"],
                     "remediation": custom.get("remediation", "Review this match and resolve according to your team's security policy")
                 })
+        
+        checks_run = 0
 
         for file_path in changed_files:
             if not any(file_path.endswith(ext) for ext in self.supported_file_extensions):
@@ -57,6 +59,9 @@ class SecretsScanner(BaseScanner):
             for line_number, line in enumerate(lines, start=1):
                 for pattern in all_patterns:
                     match = re.search(pattern["pattern"], line)
+
+                    checks_run = checks_run + 1
+
                     if match:
                         matched_text = match.group()
                         score = calculate_entropy(matched_text)
@@ -74,4 +79,4 @@ class SecretsScanner(BaseScanner):
                                 metadata={"matched_line": line.strip(), "entropy_score": score}
                             ))
 
-        return findings
+        return ScanResult(findings=findings, checks_run=checks_run)
