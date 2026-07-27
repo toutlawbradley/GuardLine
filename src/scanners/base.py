@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
-from src.models import Finding
+from src.models import Finding, ScanResult
 
 class BaseScanner(ABC):
 
     @abstractmethod
-    def scan(self, changed_files: list[str], config: dict) -> list[Finding]:
+    def scan(self, changed_files: list[str], config: dict) -> ScanResult:
         pass
 
     @property

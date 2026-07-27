@@ -1,6 +1,6 @@
 import os
 from src.scanners.base import BaseScanner
-from src.models import Finding
+from src.models import Finding, ScanResult
 
 
 class PermissionsScanner(BaseScanner):
@@ -17,8 +17,10 @@ class PermissionsScanner(BaseScanner):
     def supported_file_extensions(self) -> list[str]:
         return [".env", ".pem", ".key", "requirements.txt", "Dockerfile"]
 
-    def scan(self, changed_files: list[str], config: dict) -> list[Finding]:
+    def scan(self, changed_files: list[str], config: dict) -> ScanResult:
         findings = []
+
+        checks_run = 0
 
         for file_path in changed_files:
             if not any(file_path.endswith(ext) for ext in self.supported_file_extensions):
@@ -28,6 +30,9 @@ class PermissionsScanner(BaseScanner):
                 continue
 
             file_stats = os.stat(file_path)
+
+            checks_run = checks_run + 1
+
             permissions = oct(file_stats.st_mode)[-3:]
 
             other_bits = int(permissions[-1])
@@ -47,4 +52,4 @@ class PermissionsScanner(BaseScanner):
                     metadata={"permissions": permissions}
                 ))
 
-        return findings
+        return ScanResult(findings=findings, checks_run=checks_run)
