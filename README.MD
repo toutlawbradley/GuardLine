@@ -81,7 +81,7 @@ Every pull request to your main branches gets a security review, and a critical 
 
 GuardLine doesn't just report findings — it can block a merge. By default, **any critical finding fails the build** (the GitHub Action exits with a non-zero status). If you mark this check as required in your repo's branch protection settings, PRs with unresolved findings at or above the threshold can't be merged.
 
-The threshold is configurable via `.guardline.yml`'s `thresholds.fail-on` setting (`critical`, `warning`, or `info`). Setting a looser threshold like `fail-on: info` also fails on anything worse than info (warning or critical) — it's a minimum severity to tolerate, not an exact match. `max-warnings` (capping the number of allowed warnings regardless of severity) is not yet implemented.
+The threshold is configurable via `.guardline.yml`'s `thresholds.fail_on` setting (`critical`, `warning`, or `info`). Setting a looser threshold like `fail_on: info` also fails on anything worse than info (warning or critical) — it's a minimum severity to tolerate, not an exact match. `max-warnings` (capping the number of allowed warnings regardless of severity) is not yet implemented.
 
 ---
 
@@ -99,7 +99,7 @@ ignore:
 
 # Customize severity thresholds
 thresholds:
-  fail-on: critical          # Options: critical, warning, info
+  fail_on: critical          # Options: critical, warning, info
   max-warnings: 10           # Fail if warnings exceed this count
 
 # Enable or disable specific scanners
@@ -117,7 +117,7 @@ custom-patterns:
     severity: critical
 ```
 
-> **Note:** `thresholds.fail-on` is respected by the policy gate — see [Policy Gates](#policy-gates). `thresholds.max-warnings` is not yet implemented; setting it currently has no effect. `custom-patterns` is only supported by the secrets scanner today, and isn't yet covered by an automated test.
+> **Note:** `thresholds.fail_on` is respected by the policy gate — see [Policy Gates](#policy-gates). `thresholds.max-warnings` is not yet implemented; setting it currently has no effect. `custom-patterns` is only supported by the secrets scanner today, and isn't yet covered by an automated test.
 
 ---
 
