@@ -69,18 +69,19 @@ def main():
     fail_on = thresholds.get("fail_on", "critical")
     threshold_rank = SEVERITY_RANK.get(fail_on)
 
+    if threshold_rank is None:
+        print(f"Warning: Invalid threshold '{fail_on}' specified in configuration. Defaulting to 'critical'.")
+        threshold_rank = SEVERITY_RANK["critical"]
+
     should_fail = False
-    if report.summary.critical > 0 and SEVERITY_RANK["critical"] >= threshold_rank:
-        should_fail = True
-    if report.summary.warning > 0 and SEVERITY_RANK["warning"] >= threshold_rank:
-        should_fail = True
-    if report.summary.info > 0 and SEVERITY_RANK["info"] >= threshold_rank:
-        should_fail = True
+    for severity, rank in SEVERITY_RANK.items():
+        if rank >= threshold_rank and getattr(report.summary, severity) > 0:
+            should_fail = True
+            break
 
     if should_fail:
-         print(f"Findings at or above '{fail_on}' threshold found. Failing build.")
-         sys.exit(1)
-    
+        print(f"Findings at or above '{fail_on}' threshold found. Failing build.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
