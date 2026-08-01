@@ -10,7 +10,7 @@ def test_dependencies_scanner(mock_post):
     }
 
     scanner = DependenciesScanner()
-    result = scanner.scan(['tests/fixtures/vulnerable_deps/requirements.txt'], {})
+    result = scanner.scan(['tests/fixtures/vulnerable_deps/requirements.txt'], {}, {})
 
     assert len(result.findings) == 3
     assert result.findings[0].severity == "critical"
