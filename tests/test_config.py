@@ -2,7 +2,7 @@ from src.scanners.config.scanner import ConfigScanner
 
 def test_config_scanner():
     scanner = ConfigScanner()
-    result = scanner.scan(['tests/fixtures/bad_configs/Dockerfile'], {})
+    result = scanner.scan(['tests/fixtures/bad_configs/Dockerfile'], {} , {})
     assert len(result.findings) == 3
     assert result.findings[0].severity == "warning"
     assert result.findings[0].title == "Docker image using latest tag"

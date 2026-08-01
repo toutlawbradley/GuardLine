@@ -17,7 +17,7 @@ class PermissionsScanner(BaseScanner):
     def supported_file_extensions(self) -> list[str]:
         return [".env", ".pem", ".key", "requirements.txt", "Dockerfile"]
 
-    def scan(self, changed_files: list[str], config: dict) -> ScanResult:
+    def scan(self, changed_files: list[str], config: dict, changed_lines: dict[str, set[int]]) -> ScanResult:
         findings = []
 
         checks_run = 0

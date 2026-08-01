@@ -15,8 +15,8 @@ class DependenciesScanner(BaseScanner):
     @property
     def supported_file_extensions(self) -> list[str]:
         return ["requirements.txt", "Pipfile.lock", "package-lock.json", "yarn.lock", "Cargo.lock"]
-        
-    def scan(self, changed_files: list[str], config: dict) -> ScanResult:
+
+    def scan(self, changed_files: list[str], config: dict, changed_lines: dict[str, set[int]]) -> ScanResult:
         findings = []
 
         checks_run = 0

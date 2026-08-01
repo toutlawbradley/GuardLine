@@ -7,7 +7,7 @@ def test_permissions_scanner():
     os.chmod("fake_requirements.txt", 0o777)
 
     scanner = PermissionsScanner()
-    result = scanner.scan(['fake_requirements.txt'], {})
+    result = scanner.scan(['fake_requirements.txt'], {}, {})
 
     assert len(result.findings) == 1
     assert result.findings[0].severity == "warning"

@@ -11,15 +11,15 @@ class Orchestrator:
         self.scanners = [SecretsScanner(),DependenciesScanner(),ConfigScanner(), PatternScanner(), PermissionsScanner()]
 
     # Run the scan and return the report
-    def run(self, changed_files: list[str], config: dict) -> Report: 
+    def run(self, changed_files: list[str], config: dict, changed_lines: dict[str, set[int]]) -> Report:   
         start_time = time.time()
         findings = []
         checks_run = 0
         for scanner in self.scanners:
-            scan_result = scanner.scan(changed_files, config)
+            scan_result = scanner.scan(changed_files, config, changed_lines)            
             findings.extend(scan_result.findings)
-            checks_run = checks_run + scan_result.checks_run # Total number of checks run
-
+            checks_run = checks_run + scan_result.checks_run
+    
         critical = 0
         for finding in findings:
             if finding.severity == "critical":

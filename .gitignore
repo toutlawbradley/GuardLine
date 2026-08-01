@@ -33,3 +33,4 @@ ENV/
 *.pem
 *.keyresults.sarif
 results.sarif
+fake_requirements.txt
