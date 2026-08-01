@@ -27,7 +27,6 @@ class PatternScanner(BaseScanner):
 
     def scan(self, changed_files: list[str], config: dict, changed_lines: dict[str, set[int]]) -> ScanResult:
         findings = []
-
         checks_run = 0
 
         for file_path in changed_files:
@@ -40,7 +39,11 @@ class PatternScanner(BaseScanner):
             except (IOError, UnicodeDecodeError):
                 continue
 
+            file_line_numbers = changed_lines.get(file_path, None)
+
             for line_number, line in enumerate(lines, start=1):
+                if file_line_numbers is not None and line_number not in file_line_numbers:
+                    continue
                 for rule in self.rules:
                     checks_run = checks_run + 1
                     if re.search(rule["pattern"], line):
@@ -57,4 +60,4 @@ class PatternScanner(BaseScanner):
                             metadata={"matched_line": line.strip()}
                         ))
 
-        return ScanResult(findings=findings,checks_run=checks_run)
+        return ScanResult(findings=findings, checks_run=checks_run)

@@ -41,10 +41,14 @@ class ConfigScanner(BaseScanner):
             except (IOError, UnicodeDecodeError):
                 continue
 
+            file_line_numbers = changed_lines.get(file_path, None)
+
             for rule in self.rules:
 
                 if rule["type"] == "pattern":
                     for line_number, line in enumerate(lines, start=1):
+                        if file_line_numbers is not None and line_number not in file_line_numbers:
+                            continue
                         checks_run = checks_run + 1
                         if re.search(rule["pattern"], line):
                             findings.append(Finding(

@@ -56,12 +56,14 @@ class SecretsScanner(BaseScanner):
             except (IOError, UnicodeDecodeError):
                 continue
 
+            file_line_numbers = changed_lines.get(file_path, None)                                                         
+
             for line_number, line in enumerate(lines, start=1):
+                if file_line_numbers is not None and line_number not in file_line_numbers:
+                    continue
                 for pattern in all_patterns:
                     match = re.search(pattern["pattern"], line)
-
                     checks_run = checks_run + 1
-
                     if match:
                         matched_text = match.group()
                         score = calculate_entropy(matched_text)
@@ -79,4 +81,4 @@ class SecretsScanner(BaseScanner):
                                 metadata={"matched_line": line.strip(), "entropy_score": score}
                             ))
 
-        return ScanResult(findings=findings, checks_run=checks_run)
+            return ScanResult(findings=findings, checks_run=checks_run)
