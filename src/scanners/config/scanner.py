@@ -1,7 +1,7 @@
 import re
 import yaml
 from src.scanners.base import BaseScanner
-from src.models import Finding
+from src.models import Finding, ScanResult
 
 class ConfigScanner(BaseScanner):
 
@@ -25,8 +25,10 @@ class ConfigScanner(BaseScanner):
             data = yaml.safe_load(f)
         return data["rules"]
 
-    def scan(self, changed_files: list[str], config: dict) -> list[Finding]:
+    def scan(self, changed_files: list[str], config: dict) -> ScanResult:
         findings = []
+
+        checks_run = 0
 
         for file_path in changed_files:
             if not any(file_path.endswith(ext) for ext in self.supported_file_extensions):
@@ -40,8 +42,10 @@ class ConfigScanner(BaseScanner):
                 continue
 
             for rule in self.rules:
+
                 if rule["type"] == "pattern":
                     for line_number, line in enumerate(lines, start=1):
+                        checks_run = checks_run + 1
                         if re.search(rule["pattern"], line):
                             findings.append(Finding(
                                 scanner=self.name,
@@ -57,6 +61,7 @@ class ConfigScanner(BaseScanner):
                             ))
 
                 elif rule["type"] == "required":
+                    checks_run = checks_run + 1
                     if rule["required"] not in content:
                         findings.append(Finding(
                             scanner=self.name,
@@ -71,4 +76,4 @@ class ConfigScanner(BaseScanner):
                             metadata={"missing_keyword": rule["required"]}
                         ))
 
-        return findings
+        return ScanResult(findings=findings, checks_run= checks_run)

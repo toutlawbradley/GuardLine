@@ -29,7 +29,7 @@ class Report:
     files_scanned: int       # Number of files scanned
     guardline_version: str   # Version of GuardLine
 
-@dataclass
+@dataclass                 
 class ScanResult:
-    findings: list[Finding]
+    findings: list[Finding]  
     checks_run: int
