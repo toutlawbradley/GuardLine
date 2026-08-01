@@ -25,7 +25,7 @@ class PatternScanner(BaseScanner):
             data = yaml.safe_load(f)
         return data["rules"]
 
-    def scan(self, changed_files: list[str], config: dict) -> ScanResult:
+    def scan(self, changed_files: list[str], config: dict, changed_lines: dict[str, set[int]]) -> ScanResult:
         findings = []
 
         checks_run = 0

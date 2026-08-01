@@ -4,7 +4,7 @@ from src.models import Finding, ScanResult
 class BaseScanner(ABC):
 
     @abstractmethod
-    def scan(self, changed_files: list[str], config: dict) -> ScanResult:
+    def scan(self, changed_files: list[str], config: dict, changed_lines: dict[str, set[int]]) -> ScanResult:
         pass
 
     @property

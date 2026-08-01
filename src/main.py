@@ -6,9 +6,9 @@ from src.orchestrator import Orchestrator
 from src.reporter import Reporter
 from src.config import load_config
 from src.github_api import post_pr_comment
+from src.utils.git import get_changed_line_numbers
 
-
-def get_changed_files():
+def get_changed_files_and_lines():
     scan_target = os.environ.get("SCAN_TARGET", ".")
     base_ref = os.environ.get("BASE_REF", "")
 
@@ -19,29 +19,27 @@ def get_changed_files():
                 capture_output=True, text=True, cwd=scan_target
             )
             result = subprocess.run(
-                ["git", "diff", "--name-only", f"origin/{base_ref}"],
+                ["git", "diff", "-U0", f"origin/{base_ref}"],
                 capture_output=True, text=True, cwd=scan_target
             )
         else:
             result = subprocess.run(
-                ["git", "diff", "--name-only", "HEAD~1"],
+                ["git", "diff", "-U0", "HEAD~1"],
                 capture_output=True, text=True, cwd=scan_target
             )
 
-        files = []
-        for f in result.stdout.splitlines():
-            f = f.strip()
-            if f:
-                files.append(os.path.join(scan_target, f))
-        return files
-    except Exception:
-        return []
+        changed_lines = get_changed_line_numbers(result.stdout)
+        files = list(changed_lines.keys())
 
+        return files, changed_lines
+    except Exception:
+        return [], {}
+    
 def main():
     scan_target = os.environ.get("SCAN_TARGET", ".")
     config = load_config(scan_target)
 
-    changed_files = get_changed_files()
+    changed_files, changed_lines = get_changed_files_and_lines()
 
     if not changed_files:
         print("No changed files found.")
@@ -50,7 +48,7 @@ def main():
     orchestrator = Orchestrator()
     reporter = Reporter()
 
-    report = orchestrator.run(changed_files, config)
+    report = orchestrator.run(changed_files, config, changed_lines)
     output = reporter.generate(report)
 
     post_pr_comment(output)
