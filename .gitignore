@@ -32,3 +32,4 @@ ENV/
 .env
 *.pem
 *.keyresults.sarif
+results.sarif

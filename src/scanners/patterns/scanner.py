@@ -1,7 +1,7 @@
 import re
 import yaml
 from src.scanners.base import BaseScanner
-from src.models import Finding
+from src.models import Finding, ScanResult
 
 class PatternScanner(BaseScanner):
 
@@ -25,8 +25,10 @@ class PatternScanner(BaseScanner):
             data = yaml.safe_load(f)
         return data["rules"]
 
-    def scan(self, changed_files: list[str], config: dict) -> list[Finding]:
+    def scan(self, changed_files: list[str], config: dict) -> ScanResult:
         findings = []
+
+        checks_run = 0
 
         for file_path in changed_files:
             if not any(file_path.endswith(ext) for ext in self.supported_file_extensions):
@@ -40,6 +42,7 @@ class PatternScanner(BaseScanner):
 
             for line_number, line in enumerate(lines, start=1):
                 for rule in self.rules:
+                    checks_run = checks_run + 1
                     if re.search(rule["pattern"], line):
                         findings.append(Finding(
                             scanner=self.name,
@@ -54,4 +57,4 @@ class PatternScanner(BaseScanner):
                             metadata={"matched_line": line.strip()}
                         ))
 
-        return findings
+        return ScanResult(findings=findings,checks_run=checks_run)
