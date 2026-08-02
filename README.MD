@@ -13,7 +13,7 @@ GuardLine scans a codebase for common security issues and posts a report on the 
 ### Scan Categories
 
 - **Secrets Detection** — Finds hardcoded API keys, tokens, passwords, private keys, and credentials that should be in environment variables
-- **Dependency Vulnerabilities** — Checks your dependencies against [OSV.dev](https://osv.dev) (Google's Open Source Vulnerabilities database) for known CVEs
+- **Dependency Vulnerabilities** — Checks Python dependencies pinned in `requirements.txt` against [OSV.dev](https://osv.dev) (Google's Open Source Vulnerabilities database) for known CVEs. Other lockfile formats (`package-lock.json`, `yarn.lock`, `Cargo.lock`, `Pipfile.lock`) aren't parsed yet.
 - **Configuration Risks** — Identifies insecure defaults in common config files (Dockerfiles, nginx configs, CI/CD pipelines, cloud provider configs)
 - **Code Patterns** — Flags dangerous code patterns like SQL injection vectors and unsafe use of `eval()`
 - **Permission Issues** — Detects overly permissive file permissions on sensitive files (secrets, keys, configs)
@@ -68,9 +68,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # full history needed so GuardLine can diff against the previous commit on a plain push
       - uses: toutlawbradley/GuardLine@v1.1.0
+        with:
+          scan-level: standard  # Options: quick, standard, deep
 ```
 
 Every pull request to your main branches gets a security review, and a critical finding will fail the check, blocking the merge until it's resolved.
@@ -79,11 +79,21 @@ Every pull request to your main branches gets a security review, and a critical 
 
 ---
 
+## Scan Levels
+
+| Level | What It Covers | Speed | Best For |
+|-------|---------------|-------|----------|
+| `quick` | Secrets + critical config issues | ~5s | Fast feedback on every commit |
+| `standard` | All scan categories | ~15-30s | Default for most repos |
+| `deep` | Standard + AI-powered contextual analysis | ~60s | Pre-release or sensitive repos |
+
+---
+
 ## Policy Gates
 
 GuardLine doesn't just report findings — it can block a merge. By default, **any critical finding fails the build** (the GitHub Action exits with a non-zero status). If you mark this check as required in your repo's branch protection settings, PRs with unresolved findings at or above the threshold can't be merged.
 
-The threshold is configurable via `.guardline.yml`'s `thresholds.fail_on` setting (`critical`, `warning`, or `info`). Setting a looser threshold like `fail_on: info` also fails on anything worse than info (warning or critical) — it's a minimum severity to tolerate, not an exact match. `max-warnings` (capping the number of allowed warnings regardless of severity) is not yet implemented.
+The threshold is configurable via `.guardline.yml`'s `thresholds.fail-on` setting (`critical`, `warning`, or `info`). Setting a looser threshold like `fail-on: info` also fails on anything worse than info (warning or critical) — it's a minimum severity to tolerate, not an exact match. `max-warnings` (capping the number of allowed warnings regardless of severity) is not yet implemented.
 
 ---
 
@@ -92,6 +102,8 @@ The threshold is configurable via `.guardline.yml`'s `thresholds.fail_on` settin
 No config file is required — GuardLine runs with sensible defaults out of the box. To customize behavior, create a `.guardline.yml` in your repo root:
 
 ```yaml
+# .guardline.yml
+scan-level: standard
 
 # Ignore specific paths
 ignore:
@@ -101,7 +113,7 @@ ignore:
 
 # Customize severity thresholds
 thresholds:
-  fail_on: critical          # Options: critical, warning, info
+  fail-on: critical          # Options: critical, warning, info
   max-warnings: 10           # Fail if warnings exceed this count
 
 # Enable or disable specific scanners
@@ -119,7 +131,7 @@ custom-patterns:
     severity: critical
 ```
 
-> **Note:** `thresholds.fail_on` is respected by the policy gate — see [Policy Gates](#policy-gates). `thresholds.max-warnings` is not yet implemented; setting it currently has no effect. The `scanners:` block (enabling/disabling individual scanners) is also not yet implemented; all 5 scanners currently run on every scan regardless of what's set here. `custom-patterns` is only supported by the secrets scanner today, and isn't yet covered by an automated test.
+> **Note:** `thresholds.fail-on` is respected by the policy gate — see [Policy Gates](#policy-gates). `thresholds.max-warnings` is not yet implemented; setting it currently has no effect. `custom-patterns` is only supported by the secrets scanner today, and isn't yet covered by an automated test.
 
 ---
 
@@ -180,27 +192,6 @@ Build passes
 
 ---
 
-## Diff-Scoped Findings
-
-By default, GuardLine scopes findings to only the lines changed in a pull request, not the entire file. A one-line change to a 500-line file won't surface unrelated pre-existing issues elsewhere in that file.
-
-This applies to `secrets`, `code-patterns`, and `config`'s pattern-based rules (all line-level checks). It does not apply to `permissions`, `dependencies`, or `config`'s "required" rules, since those check whole-file or whole-repo state, not individual lines.
-
-If diff data can't be determined for a file (for example, outside a PR context), that file is scanned in full rather than skipped, so missing diff data never silently reduces coverage.
-
----
-
-## Validation
-
-Beyond GuardLine's own test suite and self-scan, it's been run against [`psf/requests`](https://github.com/psf/requests), a well-known, widely-used Python library with no relationship to this project. Scanning its full source tree (109 files) took under 0.1 seconds and produced zero findings, after fixing two real issues this run surfaced:
-
-- `ConfigScanner` was flagging non-Dockerfiles (`.pre-commit-config.yaml`, `.readthedocs.yaml`) with a Docker-specific rule, since it wasn't actually checking each rule's intended file pattern before applying it.
-- `DependenciesScanner` had no error handling around its OSV.dev API call; one dependency's response failed to parse and crashed the entire scan instead of just that one check.
-
-Both are documented in detail in [`CHALLENGES.MD`](CHALLENGES.MD).
-
----
-
 ## About This Project
 
 GuardLine is a personal project built to understand how real security scanning tools work. Enterprise security tools do this at a much larger scale with far more sophisticated detection; this is a learning exercise in building something similar from scratch.
@@ -227,9 +218,10 @@ Current limitations are documented honestly in the [Roadmap](#roadmap) below rat
 - [x] **v0.7** — SARIF output for GitHub Security tab integration
 - [ ] **v0.5** — Custom rule definitions (secrets scanner supports `custom-patterns` today, but it's untested and not yet extended to the other four scanners)
 - [x] **v0.8** — Configurable policy gate thresholds (respect `.guardline.yml`'s `thresholds` section)
-- [x] **v0.9** — Diff-scoped findings (limit results to changed lines, not whole files)
 - [ ] **v1.0** — Stable release with full documentation
-- [ ] **v1.1** — Shift-left CLI (run GuardLine locally, pre-commit/pre-push, not just in CI)
+- [ ] **v2.0** — AI-powered contextual analysis (deep scan mode)
+
+---
 
 ---
 
