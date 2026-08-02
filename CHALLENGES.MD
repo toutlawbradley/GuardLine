@@ -73,6 +73,20 @@ Fix: designed a `ScanResult` dataclass (`findings: list[Finding]`, `checks_run: 
 
 Along the way, caught and fixed several bugs in the process of writing this: a counter that reset to `0` every loop iteration instead of incrementing, an increment placed after all loops had already finished (only ever reaching `1`), an increment nested inside an `if match:` block (only counting matches, not attempts), and a few indentation/syntax errors from misplaced code blocks.
 
+### Diff-scoped findings
+
+Built a unified diff parser (`src/utils/git.py`) to scope findings to changed lines instead of whole files. `main.py` now runs `git diff -U0` once, instead of the previous `--name-only` call, producing both the file list and a per-file map of changed line numbers from the same source, rather than maintaining two separate calls for related data.
+
+`changed_lines: dict[str, set[int]]` is threaded through `BaseScanner`, all 5 scanners, and `Orchestrator.run()`. Scoping applies to `secrets`, `patterns`, and `config`'s pattern-type rules (line-level checks). `permissions`, `dependencies`, and `config`'s required-type rules stay unfiltered, since they check whole-file or whole-repo state with no line to scope to.
+
+Fail-safe default: `changed_lines.get(file_path, None)`, and a file absent from the diff data scans in full rather than being skipped. An early draft defaulted to an empty set instead of `None`, which meant missing diff data produced zero findings instead of full coverage, caught and fixed before merging.
+
+Two bugs found while building the parser:
+- `parse_diff()` didn't flush the current hunk when transitioning to a new file, so a file's last hunk could be dropped or attributed to the next file. Fixed by flushing on file transition, same as the existing hunk-to-hunk flush.
+- An early version of `SecretsScanner`'s filtering had a `return` statement indented one level too deep, causing the scan to stop after the first eligible line of the first file.
+
+Added 17 tests (`test_git.py`) covering the parser, including regression tests for both bugs above. Confirmed one of the multi-file tests wouldn't have caught the file-transition bug on its own, since it only checked file paths, not hunk content, added separate tests asserting on hunk data directly to close that gap.
+
 ### Misconceptions cleared up along the way
 - Confirmed the OSV dependency vulnerability API needs no API key or account setup. It's a free, public, unauthenticated endpoint.
 
