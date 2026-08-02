@@ -1,5 +1,7 @@
 # GuardLine
 
+**[README](README.MD)** · **[CHALLENGES](CHALLENGES.MD)**
+
 **Automated security scanning for pull requests.**
 
 GuardLine is an open-source GitHub Action I built to learn how security scanning tools work under the hood — secrets detection, dependency vulnerability checks, config auditing, and more, wired into a real CI/CD pipeline. It scans a pull request and posts a report of what it finds, with an option to block the merge if something critical turns up.
