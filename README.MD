@@ -119,7 +119,7 @@ custom-patterns:
     severity: critical
 ```
 
-> **Note:** `thresholds.fail_on` is respected by the policy gate — see [Policy Gates](#policy-gates). `thresholds.max-warnings` is not yet implemented; setting it currently has no effect. `custom-patterns` is only supported by the secrets scanner today, and isn't yet covered by an automated test.
+> **Note:** `thresholds.fail_on` is respected by the policy gate — see [Policy Gates](#policy-gates). `thresholds.max-warnings` is not yet implemented; setting it currently has no effect. The `scanners:` block (enabling/disabling individual scanners) is also not yet implemented; all 5 scanners currently run on every scan regardless of what's set here. `custom-patterns` is only supported by the secrets scanner today, and isn't yet covered by an automated test.
 
 ---
 
@@ -188,6 +188,19 @@ This applies to `secrets`, `code-patterns`, and `config`'s pattern-based rules (
 
 If diff data can't be determined for a file (for example, outside a PR context), that file is scanned in full rather than skipped, so missing diff data never silently reduces coverage.
 
+---
+
+## Validation
+
+Beyond GuardLine's own test suite and self-scan, it's been run against [`psf/requests`](https://github.com/psf/requests), a well-known, widely-used Python library with no relationship to this project. Scanning its full source tree (109 files) took under 0.1 seconds and produced zero findings, after fixing two real issues this run surfaced:
+
+- `ConfigScanner` was flagging non-Dockerfiles (`.pre-commit-config.yaml`, `.readthedocs.yaml`) with a Docker-specific rule, since it wasn't actually checking each rule's intended file pattern before applying it.
+- `DependenciesScanner` had no error handling around its OSV.dev API call; one dependency's response failed to parse and crashed the entire scan instead of just that one check.
+
+Both are documented in detail in [`CHALLENGES.MD`](CHALLENGES.MD).
+
+---
+
 ## About This Project
 
 GuardLine is a personal project built to understand how real security scanning tools work. Enterprise security tools do this at a much larger scale with far more sophisticated detection; this is a learning exercise in building something similar from scratch.
@@ -216,8 +229,7 @@ Current limitations are documented honestly in the [Roadmap](#roadmap) below rat
 - [x] **v0.8** — Configurable policy gate thresholds (respect `.guardline.yml`'s `thresholds` section)
 - [x] **v0.9** — Diff-scoped findings (limit results to changed lines, not whole files)
 - [ ] **v1.0** — Stable release with full documentation
-
----
+- [ ] **v1.1** — Shift-left CLI (run GuardLine locally, pre-commit/pre-push, not just in CI)
 
 ---
 
