@@ -81,4 +81,4 @@ class SecretsScanner(BaseScanner):
                                 metadata={"matched_line": line.strip(), "entropy_score": score}
                             ))
 
-            return ScanResult(findings=findings, checks_run=checks_run)
+        return ScanResult(findings=findings, checks_run=checks_run)
