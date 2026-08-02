@@ -41,25 +41,28 @@ class DependenciesScanner(BaseScanner):
 
                 checks_run = checks_run + 1
 
-                response = requests.post("https://api.osv.dev/v1/query", json={
-                    "package": {"name": name, "ecosystem": "PyPI"},
-                    "version": version
-                })
-
-                data = response.json()
-                if "vulns" in data:
-                    for vuln in data["vulns"]:
-                        findings.append(Finding(
-                            scanner=self.name,
-                            severity="critical",
-                            confidence="high",
-                            file=file_path,
-                            line=None,
-                            title=vuln.get("id", "Unknown CVE"),
-                            detail=vuln.get("summary", "Known vulnerability found"),
-                            remediation="Upgrade " + name + " to a patched version",
-                            pattern_id=vuln.get("id", "DEP-001"),
-                            metadata={"package": name, "version": version}
-                        ))
+                try:
+                    response = requests.post("https://api.osv.dev/v1/query", json={
+                        "package": {"name": name, "ecosystem": "PyPI"},
+                        "version": version
+                    })
+                    data = response.json()
+                    if "vulns" in data:
+                        for vuln in data["vulns"]:
+                            findings.append(Finding(
+                                scanner=self.name,
+                                severity="critical",
+                                confidence="high",
+                                file=file_path,
+                                line=None,
+                                title=vuln.get("id", "Unknown CVE"),
+                                detail=vuln.get("summary", "Known vulnerability found"),
+                                remediation="Upgrade " + name + " to a patched version",
+                                pattern_id=vuln.get("id", "DEP-001"),
+                                metadata={"package": name, "version": version}
+                            ))
+                except Exception as e:
+                     print(f"Warning: Could not check {name}=={version} for vulnerabilities: {e}")
+                     continue
 
         return ScanResult(findings=findings, checks_run=checks_run)

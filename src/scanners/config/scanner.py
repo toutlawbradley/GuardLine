@@ -45,6 +45,9 @@ class ConfigScanner(BaseScanner):
 
             for rule in self.rules:
 
+                if rule.get("file_pattern") and rule["file_pattern"] not in file_path:
+                    continue
+
                 if rule["type"] == "pattern":
                     for line_number, line in enumerate(lines, start=1):
                         if file_line_numbers is not None and line_number not in file_line_numbers:
