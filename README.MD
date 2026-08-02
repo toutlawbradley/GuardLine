@@ -68,6 +68,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history needed so GuardLine can diff against the previous commit on a plain push
       - uses: toutlawbradley/GuardLine@v1.1.0
 ```
 
