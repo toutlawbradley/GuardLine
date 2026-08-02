@@ -73,6 +73,20 @@ Fix: designed a `ScanResult` dataclass (`findings: list[Finding]`, `checks_run: 
 
 Along the way, caught and fixed several bugs in the process of writing this: a counter that reset to `0` every loop iteration instead of incrementing, an increment placed after all loops had already finished (only ever reaching `1`), an increment nested inside an `if match:` block (only counting matches, not attempts), and a few indentation/syntax errors from misplaced code blocks.
 
+### Diff-scoped findings
+
+Built a unified diff parser (`src/utils/git.py`) to scope findings to changed lines instead of whole files. `main.py` now runs `git diff -U0` once, instead of the previous `--name-only` call, producing both the file list and a per-file map of changed line numbers from the same source, rather than maintaining two separate calls for related data.
+
+`changed_lines: dict[str, set[int]]` is threaded through `BaseScanner`, all 5 scanners, and `Orchestrator.run()`. Scoping applies to `secrets`, `patterns`, and `config`'s pattern-type rules (line-level checks). `permissions`, `dependencies`, and `config`'s required-type rules stay unfiltered, since they check whole-file or whole-repo state with no line to scope to.
+
+Fail-safe default: `changed_lines.get(file_path, None)`, and a file absent from the diff data scans in full rather than being skipped. An early draft defaulted to an empty set instead of `None`, which meant missing diff data produced zero findings instead of full coverage, caught and fixed before merging.
+
+Two bugs found while building the parser:
+- `parse_diff()` didn't flush the current hunk when transitioning to a new file, so a file's last hunk could be dropped or attributed to the next file. Fixed by flushing on file transition, same as the existing hunk-to-hunk flush.
+- An early version of `SecretsScanner`'s filtering had a `return` statement indented one level too deep, causing the scan to stop after the first eligible line of the first file.
+
+Added 17 tests (`test_git.py`) covering the parser, including regression tests for both bugs above. Confirmed one of the multi-file tests wouldn't have caught the file-transition bug on its own, since it only checked file paths, not hunk content, added separate tests asserting on hunk data directly to close that gap.
+
 ### Misconceptions cleared up along the way
 - Confirmed the OSV dependency vulnerability API needs no API key or account setup. It's a free, public, unauthenticated endpoint.
 
@@ -104,11 +118,15 @@ Two bugs found while building the parser:
 - An early version of `SecretsScanner`'s filtering had a `return` statement indented one level too deep, causing the scan to stop after the first eligible line of the first file.
 
 Added 17 tests (`test_git.py`) covering the parser, including regression tests for both bugs above. Confirmed one of the multi-file tests wouldn't have caught the file-transition bug on its own, since it only checked file paths, not hunk content, added separate tests asserting on hunk data directly to close that gap.
+### GuardLine now dogfoods itself
+Added `.github/workflows/guardline-selfscan.yml`, which runs the packaged GuardLine Action against GuardLine's own repository on every push and PR to `main`, separate from `ci.yml` (which only runs the `pytest` suite). Also renamed the repo root's config file from `guardline.yml` to `.guardline.yml`, the leading dot was missing, so `config.py`'s `load_config()` (which specifically looks for `.guardline.yml`) had never actually been reading it, the file was dead weight. Added an `ignore: tests/fixtures/**` rule to it, since those files are deliberately vulnerable test fixtures, not real findings.
+
+First self-scan run failed with a missing `results.sarif` file. Traced the cause: `actions/checkout` defaults to a shallow, single-commit clone (`fetch-depth: 1`). On a plain push (not a PR), `main.py` falls back to `git diff -U0 HEAD~1` to determine changed files, but `HEAD~1` doesn't exist in a depth-1 checkout. The `git diff` subprocess call has no `check=True`, so it failed silently rather than raising, producing empty output, which correctly parsed to zero changed files, which triggered `main()`'s early return before `results.sarif` ever got written. Fixed by adding `fetch-depth: 0` to the self-scan workflow's checkout step, and applied the same fix to the README's own Quick Start example, since anyone following that documented setup exactly and pushing directly to `main` would hit the identical bug.
+
 ---
 
 ## Currently Open
 
 1. **`DependenciesScanner` claims broader lockfile support than it delivers.** `supported_file_extensions` lists `package-lock.json`, `yarn.lock`, and `Cargo.lock`, but the scanner only actually parses `==`-pinned PyPI style lines. The other three formats are silently skipped with no findings and no warning.
 2. **No error handling around the OSV API call.** A network failure or rate limit would likely crash the whole scan with an unhandled exception, directly contradicting the documented "fail-safe defaults" design principle (a broken scanner should report an error, not block the PR).
-3. **GuardLine doesn't dogfood itself yet.** Phase 0 added CI that runs the `pytest` suite on every push/PR, but GuardLine doesn't yet run its own scanner against its own repository.
-4. **No dedicated tests for `orchestrator.py` or `reporter.py`.** This is part of why the `passed=0` bug went unnoticed as long as it did. The piece of code responsible for building the `Report` object was never directly under test.
+3. **No dedicated tests for `orchestrator.py` or `reporter.py`.** This is part of why the `passed=0` bug went unnoticed as long as it did. The piece of code responsible for building the `Report` object was never directly under test.

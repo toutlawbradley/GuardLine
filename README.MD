@@ -68,6 +68,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history needed so GuardLine can diff against the previous commit on a plain push
       - uses: toutlawbradley/GuardLine@v1.1.0
 ```
 
@@ -178,6 +180,14 @@ Build passes
 
 ---
 
+## Diff-Scoped Findings
+
+By default, GuardLine scopes findings to only the lines changed in a pull request, not the entire file. A one-line change to a 500-line file won't surface unrelated pre-existing issues elsewhere in that file.
+
+This applies to `secrets`, `code-patterns`, and `config`'s pattern-based rules (all line-level checks). It does not apply to `permissions`, `dependencies`, or `config`'s "required" rules, since those check whole-file or whole-repo state, not individual lines.
+
+If diff data can't be determined for a file (for example, outside a PR context), that file is scanned in full rather than skipped, so missing diff data never silently reduces coverage.
+
 ## About This Project
 
 GuardLine is a personal project built to understand how real security scanning tools work. Enterprise security tools do this at a much larger scale with far more sophisticated detection; this is a learning exercise in building something similar from scratch.
@@ -204,6 +214,7 @@ Current limitations are documented honestly in the [Roadmap](#roadmap) below rat
 - [x] **v0.7** — SARIF output for GitHub Security tab integration
 - [ ] **v0.5** — Custom rule definitions (secrets scanner supports `custom-patterns` today, but it's untested and not yet extended to the other four scanners)
 - [x] **v0.8** — Configurable policy gate thresholds (respect `.guardline.yml`'s `thresholds` section)
+- [x] **v0.9** — Diff-scoped findings (limit results to changed lines, not whole files)
 - [ ] **v1.0** — Stable release with full documentation
 
 ---
