@@ -70,7 +70,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # full history needed so GuardLine can diff against the previous commit on a plain push
-      - uses: toutlawbradley/GuardLine@v1.1.0
+      - uses: toutlawbradley/GuardLine@v1.2.0
 ```
 
 Every pull request to your main branches gets a security review, and a critical finding will fail the check, blocking the merge until it's resolved.
